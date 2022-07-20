@@ -60,7 +60,6 @@ void loop() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_array_object);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
     
-    float time = glfwGetTime();
     Color_handler color{255*RAD_TO_DEG, 255*RAD_TO_DEG, 255*RAD_TO_DEG};
     Shader_handler shader;
     input_handler input;
@@ -83,8 +82,7 @@ void loop() {
         //glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
         glfwSwapBuffers(GWindow);
         
-        time = glfwGetTime();
-        color.change(time);
+        color.change(glfwGetTime());
         glUniform3f(u_color_loc, color.channel.r, color.channel.g, color.channel.b);
     }
 
