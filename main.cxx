@@ -8,6 +8,7 @@
 #include "input.h"
 #include "shader.h"
 
+const float RAD_TO_DEG = 57.29;
 const int GSCR_H = 600;
 const int GSCR_W = 600;
 
@@ -24,9 +25,9 @@ class Color_handler {
         }
 
         void change(float time) {
-            channel.r = std::sin(time);
-            channel.g = std::sin(time - time/2);
-            channel.b = std::sin(time - time/4);
+            channel.r = std::sin(time*RAD_TO_DEG*0.125);
+            channel.g = std::sin((time*RAD_TO_DEG + 90*RAD_TO_DEG)*0.125);
+            channel.b = std::sin((time*RAD_TO_DEG + 180*RAD_TO_DEG)*0.125);
         }
 };
 
@@ -40,9 +41,9 @@ void loop() {
     //};
     
     float data[] {
-        0.25f, -0.25f, 
-        -0.25f, -0.25f,
-        0.0f, 0.25f
+        0.5f, -0.5f, 
+        -0.5f, -0.5f,
+        0.0f, 0.5f
     };
 
     glBindBuffer(GL_ARRAY_BUFFER, vertex_array_object);
@@ -60,7 +61,7 @@ void loop() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
     
     float time = glfwGetTime();
-    Color_handler color{std::sin(time), std::sin(time - time/2), std::sin(time - time/4)};
+    Color_handler color{255*RAD_TO_DEG, 255*RAD_TO_DEG, 255*RAD_TO_DEG};
     Shader_handler shader;
     input_handler input;
 
@@ -68,6 +69,7 @@ void loop() {
     glUseProgram(shader_program);
 
     int u_color_loc = glGetUniformLocation(shader_program, "u_color");
+    int u_position_loc = glGetUniformLocation(shader_program, "u_position");
 
     while(not glfwWindowShouldClose(GWindow)) {
         // Receive Input
@@ -76,6 +78,7 @@ void loop() {
         // Render
         glClearColor(31/255.0, 31/255.0, 31/255.0, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+        std::cout << color.channel.r << color.channel.g << color.channel.b << "\n";
         glDrawArrays(GL_TRIANGLES, 0, 3);
         //glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
         glfwSwapBuffers(GWindow);
