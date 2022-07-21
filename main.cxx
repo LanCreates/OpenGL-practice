@@ -26,8 +26,8 @@ class Color_handler {
 
         void change(float time) {
             channel.r = std::sin(time*RAD_TO_DEG*0.125);
-            channel.g = std::sin((time*RAD_TO_DEG + 90*RAD_TO_DEG)*0.125);
-            channel.b = std::sin((time*RAD_TO_DEG + 180*RAD_TO_DEG)*0.125);
+            channel.g = std::sin((time*RAD_TO_DEG + 135)*0.125);
+            channel.b = std::sin((time*RAD_TO_DEG + 270)*0.125);
         }
 };
 
@@ -65,25 +65,28 @@ void loop() {
     input_handler input;
 
     unsigned int shader_program = shader.make_shader();
+
     glUseProgram(shader_program);
-
-    int u_color_loc = glGetUniformLocation(shader_program, "u_color");
-    int u_position_loc = glGetUniformLocation(shader_program, "u_position");
-
+    unsigned int u_color_loc = glGetUniformLocation(shader_program, "u_color");
+    unsigned int u_transformer_loc = glGetUniformLocation(shader_program, "u_transformer");
+    
+    float time;
     while(not glfwWindowShouldClose(GWindow)) {
         // Receive Input
         glfwPollEvents();
 
         // Render
+        time = glfwGetTime();
+        color.change(time);
+        glUniform3f(u_color_loc, color.channel.r, color.channel.g, color.channel.b);
+        glUniform2f(u_transformer_loc, (float)std::sin(time*RAD_TO_DEG*0.25), (float)std::sin((time*RAD_TO_DEG + 90)*0.25));
         glClearColor(31/255.0, 31/255.0, 31/255.0, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        std::cout << color.channel.r << color.channel.g << color.channel.b << "\n";
         glDrawArrays(GL_TRIANGLES, 0, 3);
+
         //glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
         glfwSwapBuffers(GWindow);
         
-        color.change(glfwGetTime());
-        glUniform3f(u_color_loc, color.channel.r, color.channel.g, color.channel.b);
     }
 
     glDeleteProgram(shader_program);
