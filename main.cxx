@@ -41,15 +41,20 @@ void loop() {
     //};
     
     float data[] {
-        0.5f, -0.5f, 
-        -0.5f, -0.5f,
-        0.0f, 0.5f
+        0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.5f, 0.0f, 0.0f, 1.0f
     };
 
     glBindBuffer(GL_ARRAY_BUFFER, vertex_array_object);
     glBufferData(GL_ARRAY_BUFFER, sizeof(data), &data, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
+
+    // Attribute pointers
+    // 0 => Position    1 => Color
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(2*sizeof(float)));
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
     unsigned int indices[] = {
         0, 1, 2,   0, 2, 3,
@@ -67,7 +72,7 @@ void loop() {
     unsigned int shader_program = shader.make_shader();
 
     glUseProgram(shader_program);
-    unsigned int u_color_loc = glGetUniformLocation(shader_program, "u_color");
+    unsigned int u_color_loc = glGetUniformLocation(shader_program, "changer");
     unsigned int u_transformer_loc = glGetUniformLocation(shader_program, "u_transformer");
     
     float time;
@@ -79,7 +84,7 @@ void loop() {
         time = glfwGetTime();
         color.change(time);
         glUniform3f(u_color_loc, color.channel.r, color.channel.g, color.channel.b);
-        glUniform2f(u_transformer_loc, (float)std::sin(time*RAD_TO_DEG*0.25), (float)std::sin((time*RAD_TO_DEG + 90)*0.25));
+        glUniform2f(u_transformer_loc, (float)std::sin(time*RAD_TO_DEG*0.125), (float)std::sin((time*RAD_TO_DEG + 90)*0.125));
         glClearColor(31/255.0, 31/255.0, 31/255.0, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLES, 0, 3);
