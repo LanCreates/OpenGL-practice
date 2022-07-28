@@ -1,0 +1,12 @@
+3 5
+300 45.0 255.0 0.0 50.0
+300 165.0 0.0 255.0 100.0
+300 285.0 69.0 42.0 200.0
+
+The first line is the number vertices and the number of attributes per vertex
+The second line and so on are:
+- Radius from center
+- The angle relative to x+ axis
+- Red RGB value
+- Green RGB value
+- Blue RGB value

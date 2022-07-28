@@ -1,7 +1,6 @@
-#include <iostream>
-
 #include "input.h"
 
-void input_handler::log_input() {
+void Input_handler::log_input() {
+    // TODO
     std::cout << "";
 }

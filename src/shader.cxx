@@ -1,11 +1,3 @@
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <fstream>
-
-#include "glew.h"
-#include "glfw3.h"
-
 #include "shader.h"
 
 unsigned int Shader_handler::compile_shader(unsigned int type, const char* source) { 
@@ -28,16 +20,10 @@ unsigned int Shader_handler::compile_shader(unsigned int type, const char* sourc
 }
 
 unsigned int Shader_handler::get_shader(std::string path) { 
-    enum class shaderType {
-        NONE = -1,
-        VERTEX = 0,
-        FRAGMENT = 1
-    };
-    shaderType mode = shaderType::NONE;
-    
-    std::ifstream stream(path);
-
+    file.set_path(path);
+    std::ifstream stream = file.get_stream();
     std::string line;
+
     getline(stream, line);
     switch(line[3]) {
         case 'V': mode = shaderType::VERTEX; break;
@@ -45,7 +31,7 @@ unsigned int Shader_handler::get_shader(std::string path) {
     }
     
     // Provide a buffer for each type of shader
-    std::stringstream ss[2];
+    std::stringstream ss[file.get_stream_number()];
     while(getline(stream, line)) { 
         ss[(int)mode] << (line[0] == '/'? "": line + "\n"); 
     }
@@ -64,7 +50,7 @@ unsigned int Shader_handler::get_shader(std::string path) {
     return shader;
 }
 
-unsigned int Shader_handler::make_shader() { 
+void Shader_handler::make_shader() { 
     unsigned int vertex_shader = get_shader("../src/resources/shaders/vertex.glsl");
     unsigned int fragment_shader = get_shader("../src/resources/shaders/fragment.glsl");
     unsigned int shader_program = glCreateProgram();
@@ -84,8 +70,12 @@ unsigned int Shader_handler::make_shader() {
         glGetProgramInfoLog(shader_program, sizeof(message), NULL, message);
         std::cout << "Failed to make shader program\n" 
                 << message << std::endl;
-        return 0;
+        program = 0;
+    } else {
+        program = shader_program;
     }
+}
 
-    return shader_program;
+unsigned int Shader_handler::get_program() {
+    return program;
 }

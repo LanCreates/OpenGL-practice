@@ -1,99 +1,92 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <vector>
 
 #include "glew.h"
 #include "glfw3.h"
 
+#include "callbacks.h"
 #include "input.h"
+#include "point.h"
+#include "renderer.h"
+#include "file.h"
 #include "shader.h"
 
-const float RAD_TO_DEG = 57.29;
+const float DEG_TO_RAD = 0.01745;
 const int GSCR_H = 600;
 const int GSCR_W = 600;
 
 GLFWwindow* GWindow;
-unsigned int vertex_array_object;
-unsigned int index_array_object;
+Render_handler Grenderer(&GWindow);
+Shader_handler Gshader;
+Input_handler Ginput;
+File_handler Gfile(1);
 
-class Color_handler {
-    public:
-        struct {float r, g, b; } channel;
-
-        Color_handler(float r, float g, float b) {
-            channel = {r, g, b};
-        }
-
-        void change(float time) {
-            channel.r = std::sin(time*RAD_TO_DEG*0.125);
-            channel.g = std::sin((time*RAD_TO_DEG + 135)*0.125);
-            channel.b = std::sin((time*RAD_TO_DEG + 270)*0.125);
-        }
-};
+unsigned int Gvertex_array_object;
 
 void loop() {
-    // Hexagon
-    //float data[] = {
-        //0.0f, 0.0f,       0.525f, 0.0f,
-        //0.25f, 0.5f,      -0.25f, 0.5f,
-        //-0.525f, 0.0f,      -0.25f, -0.5f,
-        //0.25f, -0.5f,
-    //};
-    
-    float data[] {
-        0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.5f, 0.0f, 0.0f, 1.0f
-    };
-
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_array_object);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(data), &data, GL_STATIC_DRAW);
-
-    // Attribute pointers
-    // 0 => Position    1 => Color
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(2*sizeof(float)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+    float data[15];
 
     unsigned int indices[] = {
         0, 1, 2,   0, 2, 3,
         0, 3, 4,   0, 4, 5,
         0, 5, 6,   0, 6, 1
     };
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_array_object);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
     
-    Color_handler color{255*RAD_TO_DEG, 255*RAD_TO_DEG, 255*RAD_TO_DEG};
-    Shader_handler shader;
-    input_handler input;
+    Gfile.set_path("../data.txt");
+    std::ifstream stream = Gfile.get_stream();
+    if(stream.is_open()) {
+        int vertex_count, attribute_count, radius, ptr = 0;
+        float angle, r, g, b;
+    
+        stream >> vertex_count >> attribute_count;
+        while(ptr < vertex_count*attribute_count) {
+            stream >> radius >> angle >> r >> g >> b;
+            data[ptr] = Point2D::locate(radius, GSCR_H, angle, 'x');
+            data[ptr + 1] = Point2D::locate(radius, GSCR_H, angle, 'y');
+            data[ptr + 2] = r/255; data[ptr + 3] = g/255; data[ptr + 4] = b/255;
+            ptr += 5;
+        }
+    } else {
+        perror("Something went wrong!\n");
+        exit(0);
+    }
 
-    unsigned int shader_program = shader.make_shader();
+    unsigned int vertex_buffer_object;
+    unsigned int index_array_object;
+    glGenBuffers(1, &vertex_buffer_object);
+    glGenBuffers(1, &index_array_object);
+    glGenVertexArrays(1, &Gvertex_array_object);
+    
+    glBindVertexArray(Gvertex_array_object);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_array_object);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(data), &data, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
 
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(2*sizeof(float)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+
+    Gfile.set_path("../data.txt");
+    Gshader.make_shader();
+    unsigned int shader_program = Gshader.get_program();
     glUseProgram(shader_program);
-    unsigned int u_color_loc = glGetUniformLocation(shader_program, "changer");
-    unsigned int u_transformer_loc = glGetUniformLocation(shader_program, "u_transformer");
     
     float time;
+    int color_transformer_loc = glGetUniformLocation(shader_program, "color_transformer");
     while(not glfwWindowShouldClose(GWindow)) {
         // Receive Input
         glfwPollEvents();
 
         // Render
         time = glfwGetTime();
-        color.change(time);
-        glUniform3f(u_color_loc, color.channel.r, color.channel.g, color.channel.b);
-        glUniform2f(u_transformer_loc, (float)std::sin(time*RAD_TO_DEG*0.125), (float)std::sin((time*RAD_TO_DEG + 90)*0.125));
-        glClearColor(31/255.0, 31/255.0, 31/255.0, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        //glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
-        glfwSwapBuffers(GWindow);
-        
+        glUniform3f(color_transformer_loc, sin(time*1.5), sin(time*2.0), sin(time*0.5));
+        Grenderer.render();
     }
-
     glDeleteProgram(shader_program);
 }
 
@@ -116,9 +109,6 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     
-    glGenBuffers(1, &vertex_array_object);
-    glGenBuffers(1, &index_array_object);
-
     loop();
 
     glfwTerminate();
