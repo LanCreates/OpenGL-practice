@@ -1,10 +1,13 @@
 // FRAGMENT SHADER
 #version 450 core
-layout (location = 0) out vec4 color;
+out vec4 out_color;
 in vec3 color_data;
 
-uniform vec3 color_transformer;
+uniform float time;
 
 void main() {
-    color = vec4(color_data*color_transformer, 1.0f); // RGBA
+    out_color = vec4(
+        color_data + 0.2*sin(time*1.5) + 0.4,
+        1.0f
+    ); // RGBA
 }
