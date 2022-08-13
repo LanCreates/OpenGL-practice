@@ -1,6 +1,6 @@
-300 45.0 255.0 0.0 0.0
-300 165.0 0.0 255.0 0.0
-300 285.0 0.0 0.0 255.0
+300 45.0 255.0 0.0 0.0 0.0 0.0
+300 165.0 0.0 255.0 0.0 0.5 1.0
+300 285.0 0.0 0.0 255.0 1.0 1.0
 
 The first line is the number vertices and the number of attributes per vertex
 The second line and so on are:

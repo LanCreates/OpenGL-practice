@@ -10,7 +10,7 @@
 #include "glfw3.h"
 #include "file.h"
 
-class Shader_handler {
+class Shader {
     private:
         enum class shaderType {
             VERTEX = 0,
@@ -18,10 +18,13 @@ class Shader_handler {
             NONE,
         };
         
+        unsigned int 
+            program,
+            shader_ID[(int)shaderType::NONE];
+
         shaderType mode = shaderType::NONE;
         File_handler file{(int)shaderType::NONE};
-        unsigned int program;
-
+        
     public:
         unsigned int compile_shader(unsigned int type, const char* source);
             /* Return a shader opject in succession, else return 0
@@ -40,6 +43,8 @@ class Shader_handler {
 
         unsigned int get_program();
             /* returns the program object */
+
+        void send_floats(std::string target, float data[4], int data_count);
 };
 
 #endif

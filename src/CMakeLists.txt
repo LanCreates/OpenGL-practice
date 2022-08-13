@@ -9,4 +9,8 @@ add_library(sources
     point.h
     renderer.cxx
     renderer.h
+    buffer.cxx
+    buffer.h
+    vao.cxx
+    vao.h
 )

@@ -1,6 +1,8 @@
 #include "shader.h"
 
-unsigned int Shader_handler::compile_shader(unsigned int type, const char* source) { 
+unsigned int Shader::get_program() { return program; }
+
+unsigned int Shader::compile_shader(unsigned int type, const char* source) { 
     unsigned int shaderID = glCreateShader(type);
 
     glShaderSource(shaderID, 1, &source, NULL);
@@ -19,7 +21,7 @@ unsigned int Shader_handler::compile_shader(unsigned int type, const char* sourc
     return shaderID;
 }
 
-unsigned int Shader_handler::get_shader(std::string path) { 
+unsigned int Shader::get_shader(std::string path) { 
     file.set_path(path);
     std::ifstream stream = file.get_stream();
     std::string line;
@@ -36,7 +38,7 @@ unsigned int Shader_handler::get_shader(std::string path) {
         ss[(int)mode] << (line[0] == '/'? "": line + "\n"); 
     }
     
-    unsigned int shader;
+    unsigned int shader = (int)shaderType::NONE;
     switch(mode) {
         case shaderType::VERTEX:
             shader = compile_shader(GL_VERTEX_SHADER, 
@@ -46,13 +48,20 @@ unsigned int Shader_handler::get_shader(std::string path) {
             shader = compile_shader(GL_FRAGMENT_SHADER, 
                     ss[(int)shaderType::FRAGMENT].str().c_str());
             break;
+        default:
+            (void)0;
     }
+    
+    if(shader != (int)shaderType::NONE) {
+        shader_ID[shader] = shader;
+    }
+
     return shader;
 }
 
-void Shader_handler::make_shader() { 
-    unsigned int vertex_shader = get_shader("../src/resources/shaders/vertex.glsl");
-    unsigned int fragment_shader = get_shader("../src/resources/shaders/fragment.glsl");
+void Shader::make_shader() { 
+    unsigned int vertex_shader = get_shader("../resources/shaders/vertex.glsl");
+    unsigned int fragment_shader = get_shader("../resources/shaders/fragment.glsl");
     unsigned int shader_program = glCreateProgram();
     
     glAttachShader(shader_program, vertex_shader);
@@ -76,6 +85,29 @@ void Shader_handler::make_shader() {
     }
 }
 
-unsigned int Shader_handler::get_program() {
-    return program;
+void Shader::send_floats(std::string target, float data[4], int data_count) {
+    switch(data_count) {
+        case 1:
+            glUniform1f(
+                glGetUniformLocation(program, target.c_str()), 
+                data[0]);
+            break;
+        case 2:
+            glUniform2f(
+                glGetUniformLocation(program, target.c_str()), 
+                data[0], data[1]);
+            break;
+        case 3:
+            glUniform3f(
+                glGetUniformLocation(program, target.c_str()), 
+                data[0], data[1], data[2]);
+            break;
+        case 4: 
+            glUniform4f(
+                glGetUniformLocation(program, target.c_str()), 
+                data[0], data[1], data[2], data[3]);
+            break;
+        default:
+            void(0);
+    }
 }

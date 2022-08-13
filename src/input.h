@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-class Input_handler {
+class Input {
     public:
         void log_input();
 };

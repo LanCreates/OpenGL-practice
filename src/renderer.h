@@ -4,11 +4,11 @@
 #include "glew.h"
 #include "glfw3.h"
 
-class Render_handler {
+class Renderer {
     private:
         GLFWwindow** target;
     public:
-        Render_handler(GLFWwindow** target_window);
+        Renderer(GLFWwindow** target_window);
         void render();
 };
 #endif
