@@ -7,12 +7,12 @@
 
 class File_handler {
     private:
-        int stream_number;
         std::string path;
     public:
-        File_handler(int stream_num);
+        File_handler();
+
         void set_path(std::string new_path);
-        int get_stream_number();
+        std::string get_path();
         std::ifstream get_stream();
 };
 

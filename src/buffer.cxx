@@ -7,20 +7,20 @@ Buffer::Buffer(
     unsigned int mode
     )
 {
-    usage = mode;
-    data = data_ptr;
-    data_type = dt_type;
-    buffer_type = buf_type;
+    buffer_spec.usage = mode;
+    buffer_spec.data_type = dt_type;
+    buffer_spec.buffer_type = buf_type;
+    to_data = data_ptr;
 }
 
-void Buffer::set_ID(unsigned int buf_ID) { buffer_ID = buf_ID; }
-GLenum Buffer::get_data_type() {return data_type; }
+GLenum Buffer::get_data_type() {return buffer_spec.data_type; }
+bool Buffer::is_normalized() {return buffer_spec.normalized; }
 
-bool Buffer::is_normalized() {return normalized; }
-void Buffer::bind() { glBindBuffer(buffer_type, buffer_ID);}
+void Buffer::init() { glGenBuffers(1, &buffer_spec.buffer_ID); }
+void Buffer::bind() { glBindBuffer(buffer_spec.buffer_type, buffer_spec.buffer_ID);}
 
 void Buffer::send_data() {
-    glBufferData(buffer_type, sizeof(*data), data, usage);
+    glBufferData(buffer_spec.buffer_type, sizeof(*to_data), to_data, buffer_spec.usage);
 }
 
 

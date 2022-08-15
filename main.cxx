@@ -22,40 +22,38 @@ const int
     GSCR_H = 600,
     GSCR_W = 600;
 
-GLFWwindow* GWindow;
+GLFWwindow* g_window;
 VAO gVAO1, gVAO2;
-
-Renderer Grenderer(&GWindow);
-Shader Gshader;
-Input Ginput; // TODO
-File_handler Gfile(1);
+Renderer g_renderer(&g_window);
+Shader_program g_shader_program;
+Input g_input;
 
 void loop() {
-    unsigned int shader_program = Gshader.get_program();
-    glUseProgram(shader_program);
+    g_shader_program.use_program();
 
     float transformer[4];
-    while(not glfwWindowShouldClose(GWindow)) {
+    while(not glfwWindowShouldClose(g_window)) {
         // Receive Input
         glfwPollEvents();
 
         // Render
         transformer[0] = glfwGetTime();
         transformer[1] = std::tan(transformer[0] + 180*RAD_TO_DEG);
-        glBindVertexArray(transformer[1] < -0.6? gVAO1.get_ID(): gVAO2.get_ID());
+        glBindVertexArray(transformer[1] < -0.6? gVAO2.get_ID(): gVAO1.get_ID());
 
-        Gshader.send_floats("time", transformer, 1);
-        Grenderer.render();
+        g_shader_program.send_floats("time", transformer, 1);
+        g_renderer.render();
     }
-    glDeleteProgram(shader_program);
 }
 
 void prepare() {
+    // Getting all the data and read it
     std::array<float, 21> data;
     std::array<float, 21> data2;
-    
-    Gfile.set_path("../data.txt");
-    std::ifstream stream = Gfile.get_stream();
+
+    File_handler file;
+    file.set_path("../data.txt");
+    std::ifstream stream = file.get_stream();
     if(stream.is_open()) {
         int radius, ptr = 0;
         float angle, 
@@ -79,38 +77,28 @@ void prepare() {
         }
     }
 
-    unsigned int 
-        temp_vao_id,
-        temp_vbo_id; 
-
+    // Preparing buffers
     // [1]===================
-    glGenVertexArrays(1, &temp_vao_id);
-    gVAO1.set_ID(temp_vao_id);
-    gVAO1.bind();
-
-    glGenBuffers(1, &temp_vbo_id);
+    gVAO1.init(); gVAO1.bind();
     Buffer VBO(&data, GL_ARRAY_BUFFER, GL_FLOAT, GL_STATIC_DRAW);
-    VBO.set_ID(temp_vbo_id); VBO.bind();
+    VBO.init(); VBO.bind();
     VBO.send_data();
 
     gVAO1.set_attrib_pointer(0, 2, 7, &VBO);
     gVAO1.set_attrib_pointer(2, 3, 7, &VBO);
 
     // [2]===================
-    glGenVertexArrays(1, &temp_vao_id);
-    gVAO2.set_ID(temp_vao_id);
-    gVAO2.bind();
-
-    glGenBuffers(1, &temp_vbo_id);
+    gVAO2.init(); gVAO2.bind();
     Buffer VBO2(&data2, GL_ARRAY_BUFFER, GL_FLOAT, GL_STATIC_DRAW);
-    VBO2.set_ID(temp_vbo_id); VBO2.bind();
+    VBO2.init(); VBO2.bind();
     VBO2.send_data();
     
     gVAO2.set_attrib_pointer(0, 2, 7, &VBO2);
     gVAO2.set_attrib_pointer(2, 3, 7, &VBO2);
 
-    Gfile.set_path("../data.txt");
-    Gshader.make_shader();
+    g_shader_program.set_shader_source_path('V', "../resources/shaders/vertex.glsl");
+    g_shader_program.set_shader_source_path('F', "../resources/shaders/fragment.glsl");
+    g_shader_program.make_shader_program();
 }
 
 void initialize() {
@@ -119,14 +107,14 @@ void initialize() {
         return;
     }
 
-    GWindow = glfwCreateWindow( GSCR_H, GSCR_W, "Title",
-                                NULL, NULL);
-    glfwMakeContextCurrent(GWindow);
-    glfwSetFramebufferSizeCallback(GWindow, callback::framebuffer_size);
+    g_window = glfwCreateWindow(GSCR_H, GSCR_W, "Title", NULL, NULL);
+    glfwMakeContextCurrent(g_window);
+    glfwSetFramebufferSizeCallback(g_window, callback::framebuffer_size);
 
     unsigned int err = glewInit();
     if(err != GLEW_OK) {
         printf("Failed to initialize GLFW: \n%s\n", glewGetErrorString(err));
+        return;
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);

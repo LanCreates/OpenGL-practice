@@ -8,13 +8,15 @@
 
 class Buffer {
     private:
-        unsigned int 
-            usage,
-            buffer_ID;
+        struct {
+            unsigned int buffer_ID;
+            unsigned int usage;
+            GLenum data_type;
+            GLenum buffer_type;
+            bool normalized;
+        } buffer_spec;
 
-        GLenum data_type, buffer_type;
-        bool normalized;
-        std::array<float, 21> *data;
+        std::array<float, 21> *to_data;
     public:
         Buffer( 
             std::array<float, 21> *data_ptr, 
@@ -23,10 +25,10 @@ class Buffer {
             unsigned int mode
         );
         
-        void set_ID(unsigned int buf_ID);
         GLenum get_data_type();
         bool is_normalized();
-
+        
+        void init();
         void bind();
         void send_data();
 };

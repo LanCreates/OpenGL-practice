@@ -1,15 +1,13 @@
 #include "file.h"
 
-File_handler::File_handler(int stream_num) { 
-    stream_number = stream_num; 
-}
+File_handler::File_handler() { }
 
 void File_handler::set_path(std::string new_path) { 
     path = new_path; 
 }
 
-int File_handler::get_stream_number() {
-    return stream_number; 
+std::string File_handler::get_path() {
+    return path;
 }
 
 std::ifstream File_handler::get_stream() {

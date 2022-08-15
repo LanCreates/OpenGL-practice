@@ -1,6 +1,6 @@
 #include "vao.h"
 
-VAO::VAO() {}
+VAO::VAO() { }
 
 void VAO::set_attrib_pointer(
     unsigned int start,
@@ -8,21 +8,23 @@ void VAO::set_attrib_pointer(
     unsigned int gap,
     Buffer *buffer)
 {
-    stride = gap;
-    start_index = start;
-    attribute_count = attrib_count;
+    attrib_ptr_spec.stride = gap;
+    attrib_ptr_spec.start_index = start;
+    attrib_ptr_spec.attribute_count = attrib_count;
+
     glVertexAttribPointer( 
-        buffer_bound, 
-        attribute_count,
+        VAO_spec.buffer_bound, 
+        attrib_ptr_spec.attribute_count,
         buffer->get_data_type(), 
         buffer->is_normalized(),
-        stride * sizeof(buffer->get_data_type()),
-        (void*)(start_index*sizeof(buffer->get_data_type()))
+        attrib_ptr_spec.stride * sizeof(buffer->get_data_type()),
+        (void*)(attrib_ptr_spec.start_index * sizeof(buffer->get_data_type()))
     );
-    glEnableVertexAttribArray(buffer_bound);
-    buffer_bound++;
+
+    glEnableVertexAttribArray(VAO_spec.buffer_bound);
+    VAO_spec.buffer_bound++;
 }
 
-void VAO::set_ID(unsigned int vao_ID) { VAO_ID = vao_ID; }
-void VAO::bind() { glBindVertexArray(VAO_ID); }
-unsigned int VAO::get_ID() { return VAO_ID; }
+unsigned int VAO::get_ID() { return VAO_spec.VAO_ID; }
+void VAO::init() { glGenVertexArrays(1, &VAO_spec.VAO_ID); }
+void VAO::bind() { glBindVertexArray(VAO_spec.VAO_ID); }

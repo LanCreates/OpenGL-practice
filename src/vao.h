@@ -7,14 +7,18 @@
 
 class VAO {
     private:
-        unsigned int
-            VAO_ID, 
-            stride,
-            start_index, 
-            attribute_count,
-            buffer_bound = 0;
+        struct {
+            unsigned int VAO_ID;
+            unsigned int buffer_bound = 0;
+        } VAO_spec;
         
-        bool normalized;
+        struct {
+            unsigned int stride;
+            unsigned int start_index; 
+            unsigned int attribute_count;
+            bool normalized;
+        } attrib_ptr_spec;
+
 
     public:
         VAO();
@@ -26,8 +30,8 @@ class VAO {
             Buffer *buffer
         );
 
-        void set_ID(unsigned int vao_ID);
         unsigned int get_ID();
+        void init();
         void bind();
 };
 

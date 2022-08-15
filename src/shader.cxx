@@ -1,6 +1,14 @@
 #include "shader.h"
 
-unsigned int Shader::get_program() { return program; }
+Shader::Shader(){}
+
+void Shader::set_path(std::string path) {
+    shader_spec.file.set_path(path);
+}
+
+void Shader::set_shader_type(shader_type type) {
+    shader_spec.type = type;
+}
 
 unsigned int Shader::compile_shader(unsigned int type, const char* source) { 
     unsigned int shaderID = glCreateShader(type);
@@ -21,71 +29,57 @@ unsigned int Shader::compile_shader(unsigned int type, const char* source) {
     return shaderID;
 }
 
-unsigned int Shader::get_shader(std::string path) { 
-    file.set_path(path);
-    std::ifstream stream = file.get_stream();
+void Shader::get_shader() { 
+    std::ifstream stream = shader_spec.file.get_stream();
     std::string line;
 
     getline(stream, line);
     switch(line[3]) {
-        case 'V': mode = shaderType::VERTEX; break;
-        case 'F': mode = shaderType::FRAGMENT; break;
+        case 'V': shader_spec.type = shader_type::VERTEX; break;
+        case 'F': shader_spec.type = shader_type::FRAGMENT; break;
     }
     
     // Provide a buffer for each type of shader
-    std::stringstream ss[file.get_stream_number()];
-    while(getline(stream, line)) { 
-        ss[(int)mode] << (line[0] == '/'? "": line + "\n"); 
-    }
+    std::stringstream ss;
+    while(getline(stream, line)) { ss << (line[0] == '/'? "": line + "\n"); }
     
-    unsigned int shader = (int)shaderType::NONE;
-    switch(mode) {
-        case shaderType::VERTEX:
-            shader = compile_shader(GL_VERTEX_SHADER, 
-                    ss[(int)shaderType::VERTEX].str().c_str());
+    unsigned int shader = (int)shader_type::NONE;
+    switch(shader_spec.type) {
+        case shader_type::VERTEX:
+            shader = compile_shader(GL_VERTEX_SHADER, ss.str().c_str());
             break;
-        case shaderType::FRAGMENT:
-            shader = compile_shader(GL_FRAGMENT_SHADER, 
-                    ss[(int)shaderType::FRAGMENT].str().c_str());
+        case shader_type::FRAGMENT:
+            shader = compile_shader(GL_FRAGMENT_SHADER, ss.str().c_str());
             break;
         default:
-            (void)0;
+            shader = 0;
     }
-    
-    if(shader != (int)shaderType::NONE) {
-        shader_ID[shader] = shader;
-    }
-
-    return shader;
+    shader_spec.ID = shader;
 }
 
-void Shader::make_shader() { 
-    unsigned int vertex_shader = get_shader("../resources/shaders/vertex.glsl");
-    unsigned int fragment_shader = get_shader("../resources/shaders/fragment.glsl");
-    unsigned int shader_program = glCreateProgram();
-    
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    
-    int is_success_link, is_success_validation;
-    char message[1024];
+unsigned int Shader::get_ID() {
+    return shader_spec.ID;
+}
 
-    glLinkProgram(shader_program);
-    glValidateProgram(shader_program);
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &is_success_link);
-    glGetProgramiv(shader_program, GL_VALIDATE_STATUS, &is_success_validation);
+// SHADER PROGRAM CLASS DEFINITIONS ======================================
+Shader_program::Shader_program() { }
 
-    if(is_success_link == GL_FALSE || is_success_validation == GL_FALSE) {
-        glGetProgramInfoLog(shader_program, sizeof(message), NULL, message);
-        std::cout << "Failed to make shader program\n" 
-                << message << std::endl;
-        program = 0;
-    } else {
-        program = shader_program;
+void Shader_program::set_shader_source_path(char shader_t, std::string new_path) {
+    switch(shader_t) {
+        case 'V':
+        case 'V' + 32:
+            shaders[(int)shader_type::VERTEX].set_path(new_path);
+            break;
+        case 'F':
+        case 'F' + 32:
+            shaders[(int)shader_type::FRAGMENT].set_path(new_path);
+            break;
+        default:
+            break;
     }
 }
 
-void Shader::send_floats(std::string target, float data[4], int data_count) {
+void Shader_program::send_floats(std::string target, float data[4], int data_count) {
     switch(data_count) {
         case 1:
             glUniform1f(
@@ -110,4 +104,53 @@ void Shader::send_floats(std::string target, float data[4], int data_count) {
         default:
             void(0);
     }
+}
+
+void Shader_program::make_shader_program() { 
+    shaders[(int)shader_type::VERTEX].set_shader_type(shader_type::VERTEX);
+    shaders[(int)shader_type::VERTEX].get_shader();
+
+    shaders[(int)shader_type::FRAGMENT].set_shader_type(shader_type::VERTEX);
+    shaders[(int)shader_type::FRAGMENT].get_shader();
+
+    unsigned int shader_program = glCreateProgram();
+    glAttachShader(shader_program, shaders[(int)shader_type::VERTEX].get_ID());
+    glAttachShader(shader_program, shaders[(int)shader_type::FRAGMENT].get_ID());
+    
+    int is_success_link, is_success_validation;
+    char message[1024];
+
+    glLinkProgram(shader_program);
+    glGetProgramiv(shader_program, GL_LINK_STATUS, &is_success_link);
+    if(is_success_link == GL_FALSE) {
+        glGetProgramInfoLog(shader_program, sizeof(message), NULL, message);
+        std::cout << "Failed to make shader program: LINK FAILURE\n" 
+                "Details ==========\n" << message << "\n";
+        program = 0;
+        return;
+    }
+
+    glValidateProgram(shader_program);
+    glGetProgramiv(shader_program, GL_VALIDATE_STATUS, &is_success_validation);
+    if(is_success_validation == GL_FALSE) {
+        glGetProgramInfoLog(shader_program, sizeof(message), NULL, message);
+        std::cout << "Failed to make shader program: VALIDATION FAILURE\n" 
+                "Details ==========\n" << message << "\n";
+        program = 0;
+        return;
+    }
+
+    program = shader_program;
+}
+
+void Shader_program::use_program() {
+    glUseProgram(program);
+}
+
+void Shader_program::list_uniforms() {
+
+}
+
+Shader_program::~Shader_program() {
+    glDeleteProgram(program);
 }
